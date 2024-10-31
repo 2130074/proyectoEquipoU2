@@ -1,19 +1,117 @@
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    android:orientation="vertical"
+    android:background="#EBF4FA">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <!-- Encabezado con la cámara frontal minimizada y el título -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:orientation="horizontal"
+        android:background="#1972D7"
+        android:padding="8dp"
+        android:gravity="center_vertical">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <ImageView
+            android:id="@+id/user_camera_view"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/operaciones"
+            android:scaleType="centerCrop"
+            android:layout_marginEnd="8dp"
+            android:background="@android:color/white"/>
+
+        <TextView
+            android:layout_width="296dp"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:text="Mobile Application for learning\nMonitoring"
+            android:textColor="@android:color/white"
+            android:textSize="16sp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingVertical="8dp"
+        android:paddingHorizontal="4dp">
+
+        <!--Temporizador -->
+        <TextView
+            android:id="@+id/timer_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00:00"
+            android:textSize="18sp"
+            android:textColor="@android:color/white"
+            android:background="#6F0505"
+            android:layout_marginStart="2dp"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="6dp"/>
+
+        <!-- Iniciar cronometro, ver ejercicio y encender camara  -->
+        <Button
+            android:id="@+id/start_button"
+            android:layout_width="102dp"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:layout_marginStart="2dp"
+            android:backgroundTint="#D9D9D9"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="6dp"
+            android:text="START ACTIVITY"
+            android:textColor="@android:color/black" />
+
+        <!-- Finalizar cronometro, ver ejercicio y encender camara  -->
+        <Button
+            android:id="@+id/finish_button"
+            android:layout_width="107dp"
+            android:textSize="12sp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:backgroundTint="#D9D9D9"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="6dp"
+            android:text="FINISH ACTIVITY"
+            android:textColor="@android:color/black" />
+
+        <!-- Ver resultados -->
+        <Button
+            android:id="@+id/view_results_button"
+            android:textSize="12sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="2dp"
+            android:backgroundTint="#B31972D7"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="6dp"
+            android:text="VIEW RESULTS"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+
+    <!-- Imagen de operaciones -->
+    <ImageView
+        android:id="@+id/operations_image"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:layout_marginTop="8dp"
+        android:contentDescription="Operaciones"
+        android:scaleType="fitCenter"
+        android:src="@drawable/operaciones" />
+
+    <!-- Instrucciones en un cuadro de texto -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:background="#771972D7"
+        android:gravity="center"
+        android:padding="16dp"
+        android:text="Please perform the following operations using a piece of scratch paper with your name at the top. You may use only a pencil and an eraser. You should write clearly the steps of your calculations. Do not use a calculator or computer during the test. For division, round to five decimal places."
+        android:textColor="@android:color/black"
+        android:textSize="10sp" />
+</LinearLayout>
