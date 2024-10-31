@@ -1,6 +1,7 @@
 package com.z_iti_271311_u2_e09;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -26,16 +27,24 @@ import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int PERMISSION_REQUEST_CAMERA = 1001;
+    private static final int PERMISSION_REQUEST_CAMERA = 1001; // Constante para el código de solicitud de permiso de cámara
     private TextView timerText;
     private Button startButton, finishButton, viewResultsButton;
     private ImageView operationsImage;
     private PreviewView userCameraView;
+
+    // Variables para el manejo del temporizador
     private Handler timerHandler = new Handler();
     private long startTime = 0L;
+    private long elapsedTime = 0L;
+
+    // Variables de estado
     private boolean isActivityStarted = false;
     private boolean isActivityFinished = false;
+    private boolean isDialogShowing = false;
+    private boolean isPaused = false;
 
+    // Variables para el manejo de la cámara
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     private Camera camera;
     private ProcessCameraProvider cameraProvider;
@@ -66,7 +75,77 @@ public class MainActivity extends AppCompatActivity {
         viewResultsButton.setOnClickListener(view -> viewResults());
     }
 
-    private void checkCameraPermissionAndStart() {
+    @Override
+    protected void onPause() {  // pausa la actividad
+        super.onPause();
+        if (isActivityStarted && !isActivityFinished && !isDialogShowing) {
+            pauseActivity();
+            showExitWarningDialog();
+        }
+    }
+
+    private void pauseActivity() { //pausar la actividad cuidando los datos guardados mientras confirma
+        if (!isPaused) {
+            isPaused = true;
+            // Guardar el tiempo transcurrido
+            elapsedTime = SystemClock.uptimeMillis() - startTime;
+            // Detener el cronómetro
+            timerHandler.removeCallbacks(updateTimerRunnable);
+            // Detener la cámara
+            stopCamera();
+        }
+    }
+
+    private void resumeActivity() { //reanuda la actividad ( por si no se quiso salir)
+        if (isPaused) {
+            isPaused = false;
+            // Actualizar el tiempo de inicio considerando el tiempo transcurrido
+            startTime = SystemClock.uptimeMillis() - elapsedTime;
+            // Reiniciar el cronómetro
+            timerHandler.postDelayed(updateTimerRunnable, 0);
+            // Reiniciar la cámara
+            startCamera();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isDialogShowing = false;
+    }
+
+    private void showExitWarningDialog() {//muestra la advertencia de que si sale va valer m
+        isDialogShowing = true;
+        new AlertDialog.Builder(this)
+                .setTitle("Warning")
+                .setMessage("If you leave the application, the activity will be finished. Do you want to continue?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    stopTimer();
+                    finishAffinity();
+                })
+                .setNegativeButton("No", (dialog, which) -> {
+                    isDialogShowing = false;
+                    resumeActivity();
+                })
+                .setOnCancelListener(dialog -> {
+                    isDialogShowing = false;
+                    resumeActivity();
+                })
+                .setCancelable(true)
+                .show();
+    }
+
+    @Override
+    public void onBackPressed() {//maneja el boton de retroseso
+        if (isActivityStarted && !isActivityFinished) {
+            pauseActivity();
+            showExitWarningDialog();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    private void checkCameraPermissionAndStart() {  //Verifica que tenga permisos para no tener errores
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
@@ -79,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+                                           @NonNull int[] grantResults) { // solicita el permiso SI ES LA PRIMERA VEZ QUE SE INSTALA
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQUEST_CAMERA) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -91,18 +170,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void startTimer() {
+    private void startTimer() { //inicia tiempo
         startTime = SystemClock.uptimeMillis();
+        elapsedTime = 0L;
+        isPaused = false;
         timerHandler.postDelayed(updateTimerRunnable, 0);
         operationsImage.setVisibility(View.VISIBLE);
         isActivityStarted = true;
         isActivityFinished = false;
-        startCamera();
+        startCamera();// manda a llamar a que se inicie la camara
         Toast.makeText(this, "You have started the exercise. Remember that the camera is turned on and you are being observed.",
                 Toast.LENGTH_LONG).show();
     }
 
-    private void startCamera() {
+    private void startCamera() { // inicia la camara
         cameraProviderFuture.addListener(() -> {
             try {
                 if (cameraProvider != null) {
@@ -117,7 +198,7 @@ public class MainActivity extends AppCompatActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
-    private void bindPreview(ProcessCameraProvider cameraProvider) {
+    private void bindPreview(ProcessCameraProvider cameraProvider) { //vincula la vista previa de la camara
         Preview preview = new Preview.Builder().build();
         CameraSelector cameraSelector = new CameraSelector.Builder()
                 .requireLensFacing(CameraSelector.LENS_FACING_FRONT)
@@ -133,7 +214,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void stopTimer() {
+    private void stopTimer() {//detiene el tiempo y finaliza la actividad
         if (isActivityStarted) {
             timerHandler.removeCallbacks(updateTimerRunnable);
             operationsImage.setVisibility(View.GONE);
@@ -147,14 +228,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void stopCamera() {
+    private void stopCamera() { //detiene la camarita
         if (cameraProvider != null) {
             cameraProvider.unbindAll();
         }
     }
 
-    private void viewResults() {
-        if (isActivityStarted && isActivityFinished) {
+    private void viewResults() { //Maneja la vista de resutados (DAMARIS)
+        if (isActivityStarted && isActivityFinished) { //Solo si se inicio y termino una ctividad
             Toast.makeText(this, "Results viewed.", Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(this, "Please complete the activity by starting and finishing it first.",
@@ -162,21 +243,23 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private Runnable updateTimerRunnable = new Runnable() {
+    private Runnable updateTimerRunnable = new Runnable() { //Temporizador
         @Override
         public void run() {
-            long elapsedMillis = SystemClock.uptimeMillis() - startTime;
-            int seconds = (int) (elapsedMillis / 1000);
-            int minutes = seconds / 60;
-            seconds = seconds % 60;
+            if (!isPaused) {
+                long currentTime = SystemClock.uptimeMillis() - startTime;
+                int seconds = (int) (currentTime / 1000);
+                int minutes = seconds / 60;
+                seconds = seconds % 60;
 
-            timerText.setText(String.format("%02d:%02d", minutes, seconds));
-            timerHandler.postDelayed(this, 500);
+                timerText.setText(String.format("%02d:%02d", minutes, seconds));
+                timerHandler.postDelayed(this, 500);
+            }
         }
     };
 
     @Override
-    protected void onDestroy() {
+    protected void onDestroy() { //destruye todo si quiere salir de la plicacion
         super.onDestroy();
         stopCamera();
     }
